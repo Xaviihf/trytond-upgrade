@@ -6,8 +6,7 @@ import pathlib
 import subprocess
 
 import psycopg2
-from trytond import config as CONFIG
-from trytond.config import parse_uri
+from trytond.config import config as CONFIG, parse_uri
 
 
 def parse_args():
