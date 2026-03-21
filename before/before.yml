@@ -1,0 +1,16 @@
+operations:
+  - name: "Use NULL value for empty foreign key with"
+    version: "7.2"
+    modules: null
+    sql: 01_use_null_value_for_empty_foreign_key.sql
+
+  - name: "Rename columns of ir.model and ir.model.field"
+    version: "7.6"
+    modules: null
+    sql: 02_rename_columns_of_ir_model_and_ir_model_field.sql
+
+  - name: "Remove NOT NULL to before_carrier and after_carrier"
+    version: "7.8"
+    modules:
+      - carrier_carriage
+    sql: 03_remove_not_null_to_before_carrier_and_after_carrier.sql

@@ -1,0 +1,1 @@
+UPDATE "account_budget_line" SET amount = -amount;

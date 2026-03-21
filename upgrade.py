@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 import argparse
-import importlib
+import logging
 import os
 import pathlib
 import subprocess
+
+import yaml
+
+logger = logging.getLogger(__name__)
 
 import psycopg2
 from trytond.config import config as CONFIG, parse_uri
@@ -12,7 +16,7 @@ from trytond.config import config as CONFIG, parse_uri
 def parse_args():
     parser = argparse.ArgumentParser(description="Tryton Upgrade")
     parser.add_argument(
-        "database", nargs=1, help="Database to upgrade")
+        "-d", "--database", required=True, help="Database to upgrade")
     parser.add_argument(
         "from_version", nargs=1, help="Actual version of the database")
     parser.add_argument(
@@ -40,24 +44,25 @@ def module_activated(cursor, module_name):
 
 
 def load_operations(phase, args):
-    ops = []
     valid_ops = []
     path = pathlib.Path(__file__).parent / phase
     from_version = args.from_version[0]
     to_version = args.to_version[0]
 
-    for file in sorted(path.glob('*.py')):
-        spec = importlib.util.spec_from_file_location(file.stem, file)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+    yml_file = path / f"{phase}.yml"
+    with open(yml_file, 'r') as f:
+        data = yaml.safe_load(f)
 
-        if hasattr(module, "OPERATIONS"):
-            ops.extend(module.OPERATIONS)
+    for op in data.get('operations', []):
+        sql_file = op.get('sql')
+        if sql_file:
+            sql_path = path / sql_file
+            with open(sql_path, 'r') as f:
+                op['sql'] = f.read()
 
-        for op in ops:
-            version = op.get("version")
-            if version > from_version and version <= to_version:
-                valid_ops.append(op)
+        version = op.get('version')
+        if version > from_version and version <= to_version:
+            valid_ops.append(op)
 
     return valid_ops
 
@@ -67,7 +72,7 @@ def run_sql(cursor, op):
     sql = op.get("sql")
 
     if not modules or all(module_activated(cursor, m) for m in modules):
-        print(f"RUNNING: {op.get('version'), op.get('name')}")
+        logger.info("RUNNING: %s, %s", op.get('version'), op.get('name'))
         cursor.execute(sql)
 
 
@@ -76,7 +81,7 @@ def run_script(cursor, op):
 
 
 def run_operations(connection, phase, args):
-    print(f"Executting {phase.upper()} operations")
+    logger.info("Executing %s operations", phase.upper())
     ops = load_operations(phase, args)
 
     with connection:
@@ -89,7 +94,7 @@ def run_operations(connection, phase, args):
 
 
 def run_trytond_admin(dbname, config_file):
-    print("RUNNING trytond-admin")
+    logger.info("Running trytond-admin")
     subprocess.run(
         ['trytond-admin', '-d', dbname, '-c', config_file, '--all', '-v'],
         check=True
@@ -97,13 +102,17 @@ def run_trytond_admin(dbname, config_file):
 
 
 def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format='trytond-upgrade %(levelname)s %(message)s',
+        )
     args = parse_args()
     if args.config:
         config_file = args.config
     else:
         raise FileNotFoundError("Missing configuration file.")
-    dbname = args.database[0]
-    print("Connecting to database...")
+    dbname = args.database
+    logger.info("Connecting to database")
     url = get_url(config_file)
     if url.username:
         connection = psycopg2.connect(
@@ -123,7 +132,7 @@ def main():
     run_trytond_admin(dbname, config_file)
 
     connection.close()
-    print("Upgrade completed.")
+    logger.info("Upgrade completed.")
 
 
 if __name__ == "__main__":

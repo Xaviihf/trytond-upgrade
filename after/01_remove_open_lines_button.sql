@@ -1,0 +1,1 @@
+DELETE FROM "ir_model_button" WHERE "name" = 'open_lines' AND "model" = 'product.price_list';

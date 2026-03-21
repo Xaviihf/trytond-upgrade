@@ -1,0 +1,29 @@
+operations:
+  - name: "Remove open_lines button"
+    version: "7.4"
+    modules:
+      - product_price_list
+      - product_price_list_dates
+    sql: 01_remove_open_lines_button.sql
+  - name: "Fill the internal transit location"
+    version: "7.6"
+    modules:
+      - stock
+    script: null  # TODO: Support scripts
+    sql: null
+  - name: "Invert account_budget_line.amount sign"
+    version: "7.6"
+    modules:
+      - account_budget
+    sql: 03_invert_account_budget_line_amount_sign.sql
+  - name: "Invert analytic_budget.amount sign"
+    version: "7.6"
+    modules:
+      - analytic_budget
+    sql: 04_invert_analytic_budget_amount_sign.sql
+  - name: "Fill the address of validated mandates with default value"
+    version: "7.6"
+    modules:
+      - account_payment_sepa
+    script: null  # TODO: Support scripts
+    sql: null

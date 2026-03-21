@@ -1,8 +1,6 @@
-- Add a README
 - Support scripts
 - Add a rollback when failing;
   - If something fails during the process, some changes may be already applied
     in the database, depending if the script reached a transaction.commit().
     Commits are needed anyways for big version jumps, as some SQL operations may depend on
     previous ones which must be saved in order to work properly.
-- Improve script Output
