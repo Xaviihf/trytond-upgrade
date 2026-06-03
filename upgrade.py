@@ -96,7 +96,7 @@ def run_operations(connection, phase, args):
 def run_trytond_admin(dbname, config_file):
     logger.info("Running trytond-admin")
     subprocess.run(
-        ['trytond-admin', '-d', dbname, '-c', config_file, '--all', '-v'],
+        ['trytond-admin', '-d', dbname, '-c', config_file, '--all', '--activate-dependencies', '-v'],
         check=True
         )
 
