@@ -9,6 +9,8 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+MAX_VERSION = "8.0"
+
 import psycopg2
 from trytond.config import config as CONFIG, parse_uri
 
@@ -23,7 +25,12 @@ def parse_args():
         "to_version", nargs=1, help="Target version to upgrade")
     parser.add_argument(
         "-c", "--config", default=None, help="Config file")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.to_version[0] > MAX_VERSION:
+        parser.error(
+            f"Unsupported target version '{args.to_version[0]}'. "
+            f"Maximum supported version is {MAX_VERSION}.")
+    return args
 
 
 def get_url(config_file=None):
@@ -95,10 +102,10 @@ def run_operations(connection, phase, args):
 
 def run_trytond_admin(dbname, config_file):
     logger.info("Running trytond-admin")
-    subprocess.run(
-        ['trytond-admin', '-d', dbname, '-c', config_file, '--all', '--activate-dependencies', '-v'],
-        check=True
-        )
+    subprocess.run([
+        'trytond-admin', '-d', dbname, '-c', config_file, '--all',
+        '--activate-dependencies', '-v'
+        ], check=True)
 
 
 def main():

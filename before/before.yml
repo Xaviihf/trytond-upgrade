@@ -21,3 +21,8 @@ operations:
     modules:
       - carrier_carriage
     sql: remove_not_null_to_before_carrier_and_after_carrier.sql
+
+  - name: "Remove obsolete modules"
+    version: "8.0"
+    modules: null
+    sql: remove_obsolete_modules.sql

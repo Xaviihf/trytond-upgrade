@@ -38,7 +38,7 @@ python3 ./trytond-upgrade/upgrade.py -d <database> -c <config_file> <from_versio
 ### Example
 
 ```bash
-python3 ./trytond-upgrade/upgrade.py -d mydb -c /etc/trytond.conf 7.2 7.8
+python3 ./trytond-upgrade/upgrade.py -d mydb -c /etc/trytond.conf 7.0 8.0
 ```
 
 ## How it works
