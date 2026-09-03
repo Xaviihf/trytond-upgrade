@@ -1,6 +1,3 @@
-from trytond.pool import Pool
-
-pool = Pool()
 Shipment = pool.get('stock.shipment.internal')
 shipments = Shipment.search([('state', 'not in', ['request', 'draft'])])
 for shipment in shipments:

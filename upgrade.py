@@ -100,12 +100,18 @@ def run_operations(connection, phase, args):
                     run_script(cursor, op)
 
 
-def run_trytond_admin(dbname, config_file):
+def run_trytond_admin(dbname, config_file=None):
     logger.info("Running trytond-admin")
-    subprocess.run([
-        'trytond-admin', '-d', dbname, '-c', config_file, '--all',
-        '--activate-dependencies', '-v'
-        ], check=True)
+    cmd = [
+        'trytond-admin',
+        '-d', dbname,
+        '--all',
+        '--activate-dependencies',
+        '-v'
+        ]
+    if config_file:
+        cmd.extend(['-c', config_file])
+    subprocess.run(cmd, check=True)
 
 
 def main():
@@ -114,14 +120,11 @@ def main():
         format='trytond-upgrade %(levelname)s %(message)s',
         )
     args = parse_args()
-    if args.config:
-        config_file = args.config
-    else:
-        raise FileNotFoundError("Missing configuration file.")
+    config_file = args.config if args.config else None
     dbname = args.database
     logger.info("Connecting to database")
     url = get_url(config_file)
-    if url.username:
+    if url and url.username:
         connection = psycopg2.connect(
             dbname=dbname,
             host=url.hostname,
