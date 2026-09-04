@@ -25,6 +25,8 @@ def parse_args():
         "to_version", nargs=1, help="Target version to upgrade")
     parser.add_argument(
         "-c", "--config", default=None, help="Config file")
+    parser.add_argument(
+        "--extra", default=None, help="Custom yml file with custom operations")
     args = parser.parse_args()
     if args.to_version[0] > MAX_VERSION:
         parser.error(
@@ -50,13 +52,29 @@ def module_activated(cursor, module_name):
     return bool(result and result[0] == 'activated')
 
 
+def _load_extra_operations(phase, filename):
+    operations = []
+    with open(filename, 'r') as f:
+        data = yaml.safe_load(f)
+
+    for op in data.get(phase, []):
+        if op.get('sql'):
+            op['name'] = f"{phase.capitalize()} queries from {filename}"
+            operations.append(op)
+
+    return operations
+
+
 def load_operations(phase, args):
     valid_ops = []
     path = pathlib.Path(__file__).parent / phase
     from_version = args.from_version[0]
     to_version = args.to_version[0]
-
     yml_file = path / f"{phase}.yml"
+
+    if args.extra:
+        valid_ops.extend(_load_extra_operations(phase, args.extra))
+
     with open(yml_file, 'r') as f:
         data = yaml.safe_load(f)
 
@@ -75,11 +93,14 @@ def load_operations(phase, args):
 
 
 def run_sql(cursor, op):
-    modules = op.get("modules")
-    sql = op.get("sql")
+    modules = op.get('modules')
+    sql = op.get('sql')
 
     if not modules or all(module_activated(cursor, m) for m in modules):
-        logger.info("RUNNING: %s, %s", op.get('version'), op.get('name'))
+        logger.info(
+            "RUNNING: %s", ", ".join(
+                filter(None, [op.get('version'), op.get('name')]))
+            )
         cursor.execute(sql)
 
 
@@ -89,14 +110,15 @@ def run_script(cursor, op):
 
 def run_operations(connection, phase, args):
     logger.info("Executing %s operations", phase.upper())
+    # TODO: All operations could be loaded just one time in main()
     ops = load_operations(phase, args)
 
     with connection:
         with connection.cursor() as cursor:
             for op in ops:
-                if op.get("sql"):
+                if op.get('sql'):
                     run_sql(cursor, op)
-                elif op.get("script"):
+                elif op.get('script'):
                     run_script(cursor, op)
 
 
