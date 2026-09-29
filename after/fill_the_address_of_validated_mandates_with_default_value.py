@@ -8,3 +8,5 @@ for mandate in mandates:
     mandate.address = mandate.on_change_party()
 
 Mandate.save(mandates)
+transaction.commit()
+
